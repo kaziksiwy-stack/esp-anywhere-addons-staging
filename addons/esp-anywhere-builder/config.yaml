@@ -1,5 +1,5 @@
 name: ESP Anywhere Builder
-version: 0.1.0
+version: 0.2.0
 slug: esp_anywhere_builder
 description: Build, provision and securely update ESP Anywhere devices
 stage: experimental
@@ -20,19 +20,5 @@ map:
   - type: homeassistant_config
     read_only: true
     path: /homeassistant
-options:
-  worker_url: https://esp-anywhere-worker-staging.esp-anywhere-worker.workers.dev
-  public_artifact_base_url: https://esp-anywhere-worker-staging.esp-anywhere-worker.workers.dev/artifacts
-  installation_id: null
-  worker_ha_token: null
-  builder_token: null
-  firmware_signing_key: null
-  signing_key_id: staging-esphome-2026-08
-schema:
-  worker_url: url
-  public_artifact_base_url: url
-  installation_id: str
-  worker_ha_token: password
-  builder_token: password
-  firmware_signing_key: password
-  signing_key_id: str
+options: {}
+schema: {}
