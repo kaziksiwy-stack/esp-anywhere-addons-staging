@@ -175,7 +175,8 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "public, max-age=31536000, immutable" if "/builds/" in decoded else "no-store")
+        immutable = "/builds/" in decoded and candidate.name != "firmware.manifest.json"
+        self.send_header("Cache-Control", "public, max-age=31536000, immutable" if immutable else "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)

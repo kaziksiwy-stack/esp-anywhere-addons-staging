@@ -18,4 +18,4 @@ LABEL \
     io.hass.type="addon" \
     io.hass.arch="${BUILD_ARCH}"
 
-CMD ["python3", "/app/run.py"]
+ENTRYPOINT ["python3", "/app/run.py"]

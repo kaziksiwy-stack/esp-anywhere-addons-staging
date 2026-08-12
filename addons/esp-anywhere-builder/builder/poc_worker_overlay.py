@@ -85,6 +85,12 @@ esp_anywhere_v03:
 """
 
 
+def web_chip_family(value: str) -> str:
+    return {"ESP32S2": "ESP32-S2", "ESP32S3": "ESP32-S3", "ESP32C2": "ESP32-C2",
+            "ESP32C3": "ESP32-C3", "ESP32C5": "ESP32-C5", "ESP32C6": "ESP32-C6",
+            "ESP32H2": "ESP32-H2", "ESP32P4": "ESP32-P4"}.get(value, value)
+
+
 def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> dict:
     source = source.resolve(strict=True)
     output.mkdir(parents=True, exist_ok=True)
@@ -160,7 +166,7 @@ def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> d
     (output / f"{values['artifact_name']}.ota-manifest.json").write_bytes(ota_manifest)
     manifest = {"name": values["friendly_name"], "version": values["firmware_version"],
                 "new_install_prompt_erase": False,
-                "builds": [{"chipFamily": target["chip_family"], "parts": [{"path": factory.name, "offset": 0}]}]}
+                "builds": [{"chipFamily": web_chip_family(target["chip_family"]), "parts": [{"path": factory.name, "offset": 0}]}]}
     (output / f"{values['artifact_name']}.manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return metadata
 

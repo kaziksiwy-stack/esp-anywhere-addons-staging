@@ -1,5 +1,5 @@
 name: ESP Anywhere Builder
-version: 0.3.4
+version: 0.3.5
 slug: esp_anywhere_builder
 description: Build, provision and securely update ESP Anywhere devices
 stage: experimental
