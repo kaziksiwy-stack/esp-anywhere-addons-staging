@@ -96,7 +96,7 @@ def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> d
     component_path = Path(__file__).parents[1] / "esp-anywhere-esphome" / "components"
     with tempfile.TemporaryDirectory(prefix="esp-anywhere-v03-overlay-") as raw_temp:
         project = Path(raw_temp) / "project"
-        shutil.copytree(source.parent, project, ignore=shutil.ignore_patterns(".esphome", "build", ".git"))
+        shutil.copytree(source.parent, project, ignore=shutil.ignore_patterns(".esphome", "build", ".git", ".device-builder*"))
         config = esphome_yaml.load_yaml(project / source.name)
         if not isinstance(config, dict):
             raise RuntimeError("User ESPHome YAML must contain a mapping")

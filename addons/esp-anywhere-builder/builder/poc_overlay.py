@@ -209,7 +209,7 @@ def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> d
 
     with tempfile.TemporaryDirectory(prefix="esp-anywhere-overlay-") as raw_temp:
         temp = Path(raw_temp)
-        shutil.copytree(source.parent, temp / "project", ignore=shutil.ignore_patterns(".esphome", "build", ".git"))
+        shutil.copytree(source.parent, temp / "project", ignore=shutil.ignore_patterns(".esphome", "build", ".git", ".device-builder*"))
         project = temp / "project"
         included_user_file = source.name
         if values.get("mode") == "managed":
