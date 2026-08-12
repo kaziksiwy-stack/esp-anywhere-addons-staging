@@ -656,6 +656,17 @@ class BuilderService:
             })
         return result
 
+    def latest_downloads(self, project_id: str) -> dict[str, str]:
+        project = self.store.get(project_id)
+        if not project.last_build_id:
+            raise KeyError(project_id)
+        root = self.artifact_dir / "projects" / project_id / "builds" / project.last_build_id
+        required = {"factory": "firmware.factory.bin", "web_manifest": "firmware.manifest.json"}
+        if not all((root / filename).is_file() for filename in required.values()):
+            raise KeyError(project_id)
+        base = f"v1/artifacts/projects/{project_id}/builds/{project.last_build_id}"
+        return {name: f"{base}/{filename}" for name, filename in required.items()}
+
     def provision(self, project_id: str, build_id: str, device_name: str) -> dict[str, Any]:
         project = self.store.get(project_id)
         if project.last_build_id != build_id:

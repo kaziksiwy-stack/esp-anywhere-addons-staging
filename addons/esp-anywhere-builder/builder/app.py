@@ -6,6 +6,9 @@ from dataclasses import asdict
 from http import HTTPStatus
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import base64
+import hashlib
+import hmac
 import json
 import mimetypes
 import os
@@ -29,7 +32,6 @@ class ApiHandler(BaseHTTPRequestHandler):
     service: BuilderService
     token: str
     ui_path: Path
-    sessions: dict[str, float] = {}
 
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
@@ -48,6 +50,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/v1/projects/([a-z0-9_-]{3,64})", path)
             if match:
                 self._json(HTTPStatus.OK, asdict(self.service.store.get(match.group(1))))
+                return
+            match = re.fullmatch(r"/v1/projects/([a-z0-9_-]{3,64})/latest-artifacts", path)
+            if match:
+                self._json(HTTPStatus.OK, {"downloads": self.service.latest_downloads(match.group(1))})
                 return
             match = re.fullmatch(r"/v1/projects/([a-z0-9_-]{3,64})/source", path)
             if match:
@@ -145,10 +151,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
 
     def _serve_ui(self) -> None:
-        session = secrets.token_urlsafe(32)
-        now = time.time()
-        type(self).sessions = {key: expiry for key, expiry in type(self).sessions.items() if expiry > now}
-        type(self).sessions[session] = now + SESSION_TTL
+        session = self._new_session()
         body = self.ui_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -191,10 +194,32 @@ class ApiHandler(BaseHTTPRequestHandler):
             return True
         cookie = SimpleCookie(self.headers.get("Cookie", ""))
         value = cookie.get("esp_anywhere_builder")
-        if value and self.sessions.get(value.value, 0) > time.time():
+        if value and self._valid_session(value.value):
             return True
         self._json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"}, authorize=False)
         return False
+
+    @classmethod
+    def _new_session(cls) -> str:
+        expires = str(int(time.time()) + SESSION_TTL)
+        payload = f"{expires}.{secrets.token_urlsafe(18)}"
+        signature = hmac.new(cls.token.encode(), payload.encode(), hashlib.sha256).digest()
+        encoded = base64.urlsafe_b64encode(signature).decode().rstrip("=")
+        return f"{payload}.{encoded}"
+
+    @classmethod
+    def _valid_session(cls, value: str) -> bool:
+        try:
+            expires, nonce, supplied = value.split(".", 2)
+            if int(expires) <= int(time.time()) or not nonce:
+                return False
+            payload = f"{expires}.{nonce}"
+            expected = base64.urlsafe_b64encode(
+                hmac.new(cls.token.encode(), payload.encode(), hashlib.sha256).digest()
+            ).decode().rstrip("=")
+            return hmac.compare_digest(supplied, expected)
+        except (TypeError, ValueError):
+            return False
 
     def _json(self, status: HTTPStatus, payload: dict[str, Any], *, authorize: bool = True,
               no_store: bool = False) -> None:
