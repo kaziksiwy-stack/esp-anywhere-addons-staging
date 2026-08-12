@@ -16,7 +16,7 @@ import time
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from builder_core import BuilderService, PROJECT_ID_PATTERN, short_error
+from builder_core import BuilderService, PROJECT_ID_PATTERN, new_project_source, short_error
 
 
 MAX_JSON_BYTES = 512 * 1024
@@ -85,7 +85,9 @@ class ApiHandler(BaseHTTPRequestHandler):
         try:
             body = self._body()
             if path == "/v1/projects":
-                item = self.service.store.create(body.get("name", ""), body.get("yaml_file", ""), body.get("source"))
+                name = body.get("name", "")
+                source = new_project_source(name) if body.get("create_new") is True else None
+                item = self.service.store.create(name, body.get("yaml_file", ""), source)
                 self._json(HTTPStatus.CREATED, asdict(item))
                 return
             match = re.fullmatch(r"/v1/projects/([a-z0-9_-]{3,64})/validate", path)
@@ -106,6 +108,9 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         except RuntimeError as error:
             self._json(HTTPStatus.CONFLICT, {"error": short_error(str(error))})
+            return
+        except PermissionError:
+            self._json(HTTPStatus.CONFLICT, {"error": "ESPHome project directory is not writable"})
             return
         except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
             self._json(HTTPStatus.BAD_REQUEST, {"error": short_error(str(error))})

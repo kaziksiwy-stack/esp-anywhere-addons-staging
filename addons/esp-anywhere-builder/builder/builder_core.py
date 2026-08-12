@@ -59,6 +59,15 @@ def next_patch_version(*versions: str | None) -> str:
     return f"{major}.{minor}.{patch + 1}"
 
 
+def new_project_source(name: str) -> str:
+    friendly_name = json.dumps(name.strip(), ensure_ascii=False)
+    return (
+        f"esphome:\n  name: {project_slug(name)}\n  friendly_name: {friendly_name}\n\n"
+        "esp32:\n  board: esp32-s3-devkitc-1\n  framework:\n    type: arduino\n\n"
+        "logger:\n\nwifi:\n  ap: {}\n"
+    )
+
+
 def safe_relative_yaml(value: str) -> Path:
     if not isinstance(value, str) or YAML_FILE_PATTERN.fullmatch(value) is None:
         raise ValueError("Invalid ESPHome YAML path")
