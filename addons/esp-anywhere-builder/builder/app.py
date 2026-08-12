@@ -60,6 +60,9 @@ class ApiHandler(BaseHTTPRequestHandler):
             if path == "/v1/devices":
                 self._json(HTTPStatus.OK, {"devices": self.service.devices()})
                 return
+            if path == "/v1/settings/advanced":
+                self._json(HTTPStatus.OK, self.service.advanced_status(), no_store=True)
+                return
             match = re.fullmatch(r"/v1/devices/([a-z0-9_-]{3,64})/logs", path)
             if match:
                 self._json(HTTPStatus.OK, self.service.diagnostics(match.group(1)))

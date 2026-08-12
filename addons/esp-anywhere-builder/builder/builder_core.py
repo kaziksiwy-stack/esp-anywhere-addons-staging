@@ -669,6 +669,18 @@ class BuilderService:
         }
 
 
+    def advanced_status(self) -> dict[str, Any]:
+        """Expose infrastructure readiness without ever returning credentials."""
+        return {
+            "firmware_signing": "ready" if self.signing_key.is_file() else "not_ready",
+            "key_id": self.key_id if self.signing_key.is_file() else None,
+            "worker_endpoint": self.worker.endpoint or None,
+            "artifact_endpoint": self.public_base_url or None,
+            "installation_id": self.worker.installation_id or None,
+            "worker_credentials": "ready" if self.worker.configured else "not_ready",
+        }
+
+
 def short_error(value: str) -> str:
     lines = [line.strip() for line in value.splitlines() if line.strip()]
     message = lines[-1] if lines else "Operation failed"
