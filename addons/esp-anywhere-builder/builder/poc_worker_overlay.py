@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -94,7 +95,7 @@ def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> d
     validate_transport_target(target)
     supported_domains, unsupported_entities = report_entity_domains(source_config)
     component_path = Path(__file__).parents[1] / "esp-anywhere-esphome" / "components"
-    with tempfile.TemporaryDirectory(prefix="esp-anywhere-v03-overlay-") as raw_temp:
+    with tempfile.TemporaryDirectory(prefix="esp-anywhere-v03-overlay-", dir=os.environ.get("BUILDER_TMP_DIR")) as raw_temp:
         project = Path(raw_temp) / "project"
         shutil.copytree(source.parent, project, ignore=shutil.ignore_patterns(".esphome", "build", ".git", ".device-builder*"))
         config = esphome_yaml.load_yaml(project / source.name)

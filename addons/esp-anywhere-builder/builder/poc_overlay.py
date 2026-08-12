@@ -207,7 +207,7 @@ def build(source: Path, output: Path, values: dict[str, str], esphome: str) -> d
     unsupported = find_unsupported(source_config)
     component_path = Path(__file__).parents[1] / "esp-anywhere-esphome" / "components"
 
-    with tempfile.TemporaryDirectory(prefix="esp-anywhere-overlay-") as raw_temp:
+    with tempfile.TemporaryDirectory(prefix="esp-anywhere-overlay-", dir=os.environ.get("BUILDER_TMP_DIR")) as raw_temp:
         temp = Path(raw_temp)
         shutil.copytree(source.parent, temp / "project", ignore=shutil.ignore_patterns(".esphome", "build", ".git", ".device-builder*"))
         project = temp / "project"

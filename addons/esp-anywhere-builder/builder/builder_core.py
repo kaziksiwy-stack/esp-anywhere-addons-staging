@@ -488,6 +488,8 @@ class BuilderService:
         self._active_job: str | None = None
         self.jobs: dict[str, BuildRecord] = {}
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        self.temp_dir = Path(os.environ.get("BUILDER_TMP_DIR", str(self.work_dir / "tmp")))
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self, project_id: str) -> ValidationRecord:
         project = self.store.get(project_id)
@@ -691,7 +693,9 @@ class BuilderService:
 
 
 def short_error(value: str) -> str:
-    lines = [line.strip() for line in value.splitlines() if line.strip()]
-    message = lines[-1] if lines else "Operation failed"
+    clean = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", value)
+    lines = [line.strip() for line in clean.splitlines() if line.strip()]
+    diagnostic = [line for line in lines if re.search(r"(?i)(fatal error:|error:|\[error\]|exception:)", line)]
+    message = diagnostic[0] if diagnostic else (lines[-1] if lines else "Operation failed")
     message = re.sub(r"(?i)(password|token|secret)(\s*[:=]\s*)\S+", r"\1\2<redacted>", message)
-    return message[:300]
+    return message[:500]

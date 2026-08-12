@@ -88,7 +88,7 @@ def main() -> None:
 
     environment = {
         "BUILDER_PORT": "8099", "CONFIG_DIR": "/homeassistant/esphome",
-        "WORK_DIR": str(DATA_DIR / "work"), "STATE_DIR": str(DATA_DIR / "state"),
+        "WORK_DIR": str(DATA_DIR / "work"), "STATE_DIR": str(DATA_DIR / "state"), "BUILDER_TMP_DIR": str(DATA_DIR / "work" / "tmp"),
         "ARTIFACT_DIR": str(DATA_DIR / "artifacts"), "ARTIFACT_PUBLISHER": "worker",
         "WORKER_URL": worker_url, "PUBLIC_ARTIFACT_BASE_URL": f"{worker_url}/artifacts",
         "INSTALLATION_ID": installation["installation_id"],
