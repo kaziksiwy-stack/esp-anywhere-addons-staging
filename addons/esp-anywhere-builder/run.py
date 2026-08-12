@@ -24,7 +24,7 @@ def write_secret(name: str, value: str) -> Path:
     return path
 
 
-def managed_installation(document: dict[str, object]) -> dict[str, str]:
+def managed_installation(document: dict[str, object], worker_url: str = DEFAULT_WORKER_URL) -> dict[str, str]:
     entries = document.get("data", {}).get("entries", [])
     matches: list[dict[str, str]] = []
     for raw in entries if isinstance(entries, list) else []:
@@ -34,15 +34,15 @@ def managed_installation(document: dict[str, object]) -> dict[str, str]:
         if not isinstance(data, dict):
             continue
         values = (data.get("installation_id"), data.get("token"), data.get("relay_url"))
-        if all(isinstance(value, str) and value for value in values):
+        if all(isinstance(value, str) and value for value in values) and values[2].rstrip("/") == worker_url:
             matches.append({
                 "installation_id": values[0], "token": values[1],
                 "relay_url": values[2].rstrip("/"),
             })
     if len(matches) != 1:
         raise SystemExit(
-            "Setup requires exactly one managed ESP Anywhere integration in Home Assistant; "
-            f"found {len(matches)}"
+            "Setup requires exactly one staging ESP Anywhere integration in Home Assistant; "
+            f"found {len(matches)} for {worker_url}"
         )
     return matches[0]
 
@@ -68,8 +68,6 @@ def provision_signing_key(worker_url: str, installation_id: str, token: str) -> 
 def main() -> None:
     installation = managed_installation(json.loads(HA_ENTRIES.read_text(encoding="utf-8")))
     worker_url = installation["relay_url"]
-    if worker_url != DEFAULT_WORKER_URL:
-        raise SystemExit("The installed ESP Anywhere integration is not connected to the staging Worker")
 
     worker_token = write_secret("worker_ha_token", installation["token"])
     builder_token_path = SECRET_DIR / "builder_token"
