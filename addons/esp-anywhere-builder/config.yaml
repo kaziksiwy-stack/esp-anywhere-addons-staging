@@ -1,5 +1,5 @@
 name: ESP Anywhere Builder
-version: 0.3.6
+version: 0.3.7
 slug: esp_anywhere_builder
 description: Build, provision and securely update ESP Anywhere devices
 stage: experimental
@@ -18,7 +18,7 @@ backup: cold
 tmpfs: true
 map:
   - type: homeassistant_config
-    read_only: true
+    read_only: false
     path: /homeassistant
 options: {}
 schema: {}
