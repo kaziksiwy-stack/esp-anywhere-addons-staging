@@ -24,7 +24,10 @@ def write_secret(name: str, value: str) -> Path:
     return path
 
 
-def managed_installation(document: dict[str, object], worker_url: str = DEFAULT_WORKER_URL) -> dict[str, str]:
+def managed_installation(
+    document: dict[str, object], worker_url: str = DEFAULT_WORKER_URL,
+    existing_token: str | None = None,
+) -> dict[str, str]:
     entries = document.get("data", {}).get("entries", [])
     matches: list[dict[str, str]] = []
     for raw in entries if isinstance(entries, list) else []:
@@ -39,6 +42,10 @@ def managed_installation(document: dict[str, object], worker_url: str = DEFAULT_
                 "installation_id": values[0], "token": values[1],
                 "relay_url": values[2].rstrip("/"),
             })
+    if len(matches) > 1 and existing_token:
+        previous = [item for item in matches if secrets.compare_digest(item["token"], existing_token)]
+        if len(previous) == 1:
+            return previous[0]
     if len(matches) != 1:
         raise SystemExit(
             "Setup requires exactly one staging ESP Anywhere integration in Home Assistant; "
@@ -66,7 +73,12 @@ def provision_signing_key(worker_url: str, installation_id: str, token: str) -> 
 
 
 def main() -> None:
-    installation = managed_installation(json.loads(HA_ENTRIES.read_text(encoding="utf-8")))
+    previous_token_path = SECRET_DIR / "worker_ha_token"
+    previous_token = (previous_token_path.read_text(encoding="utf-8").strip()
+                      if previous_token_path.is_file() else None)
+    installation = managed_installation(
+        json.loads(HA_ENTRIES.read_text(encoding="utf-8")), existing_token=previous_token,
+    )
     worker_url = installation["relay_url"]
 
     worker_token = write_secret("worker_ha_token", installation["token"])
